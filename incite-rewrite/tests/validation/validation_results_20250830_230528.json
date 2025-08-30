@@ -1,0 +1,94 @@
+[
+  {
+    "test_name": "Citation Extraction Accuracy",
+    "passed": false,
+    "execution_time": 0.16884708404541016,
+    "details": {
+      "accuracy_percentage": 13.04,
+      "correct_extractions": 3,
+      "total_expected": 23,
+      "total_found": 18,
+      "precision": 16.67,
+      "recall": 13.04
+    },
+    "errors": [
+      "Missing in simple_case: Carlill v. Carbolic Smoke Ball Company [1893] 1 Q.B. 256",
+      "Missing in simple_case: Pharmaceutical Society of Great Britain v. Boots Cash Chemists (Southern) Ltd [1953] 1 Q.B. 401",
+      "Missing in simple_case: Williams v. Roffey Bros & Nicholls (Contractors) Ltd [1991] 1 Q.B. 1",
+      "Missing in complex_case: Brown v. Board of Education, 347 U.S. 483 (1954)",
+      "Missing in complex_case: Plessy v. Ferguson, 163 U.S. 537 (1896)",
+      "Missing in complex_case: Heart of Atlanta Motel, Inc. v. United States, 379 U.S. 241 (1964)",
+      "Missing in complex_case: Katzenbach v. McClung, 379 U.S. 294 (1964)",
+      "Missing in complex_case: Parents Involved in Community Schools v. Seattle School District No. 1, 551 U.S. 701 (2007)",
+      "Missing in complex_case: Fisher v. University of Texas at Austin, 570 U.S. 297 (2013)",
+      "Missing in complex_case: D.H. and Others v. Czech Republic, Application No. 57325/00 (2007)"
+    ]
+  },
+  {
+    "test_name": "Processing Performance",
+    "passed": true,
+    "execution_time": 0.5458939075469971,
+    "details": {
+      "max_processing_time": 0.103,
+      "average_processing_time": 0.045,
+      "requirement_limit": 5.0,
+      "documents_tested": 4,
+      "all_under_limit": true
+    },
+    "errors": []
+  },
+  {
+    "test_name": "Document Privacy (Zero Retention)",
+    "passed": false,
+    "execution_time": 0.01542973518371582,
+    "details": {
+      "documents_processed": 3,
+      "content_retained": 0,
+      "fraud_hashes_stored": 0,
+      "privacy_compliance_percentage": 0
+    },
+    "errors": [
+      "Fraud protection hashes not properly stored"
+    ]
+  },
+  {
+    "test_name": "Fraud Protection via Hash Verification",
+    "passed": true,
+    "execution_time": 0.010396718978881836,
+    "details": {
+      "tamper_detection_working": true,
+      "duplicate_detection_working": true,
+      "hash_persistence_working": true,
+      "bulk_storage_working": true,
+      "total_hashes_stored": 101
+    },
+    "errors": []
+  },
+  {
+    "test_name": "System Integration",
+    "passed": true,
+    "execution_time": 0.04656052589416504,
+    "details": {
+      "workflow_completed": true,
+      "processing_under_limit": true,
+      "citations_extracted": 4,
+      "fraud_protection_active": true
+    },
+    "errors": []
+  },
+  {
+    "test_name": "Load Performance Testing",
+    "passed": true,
+    "execution_time": 0.3166689872741699,
+    "details": {
+      "concurrent_threads": 5,
+      "documents_per_thread": 3,
+      "total_documents": 15,
+      "successful_runs": 15,
+      "failed_runs": 0,
+      "max_processing_time": 0.1457207202911377,
+      "average_processing_time": 0.06686422030131021
+    },
+    "errors": []
+  }
+]

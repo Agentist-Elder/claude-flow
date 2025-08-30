@@ -1,6 +1,7 @@
 """
-Global pytest configuration and shared fixtures for London School TDD test suite.
-Provides common test utilities and fixtures across all test modules.
+Comprehensive pytest configuration and shared fixtures for London School TDD test suite.
+Provides common test utilities, mock objects, and fixtures across all test modules.
+Focuses on behavior verification and real system interactions.
 """
 
 import pytest
@@ -9,13 +10,18 @@ import tempfile
 import shutil
 import sqlite3
 import time
-from typing import Dict, Any, Generator
+import json
+from typing import Dict, Any, Generator, List, Optional
 import logging
+from unittest.mock import Mock, patch, MagicMock
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 from src.api.endpoints import create_app
 from src.auth.authentication import AuthenticationManager
 from src.utils.text_processing import TextProcessor
 from src.database.connection import DatabaseManager
+from src.core.text_analyzer import TextAnalyzer
 
 
 # Configure test logging
@@ -27,6 +33,154 @@ logging.basicConfig(
 # Disable verbose logging from dependencies during tests
 logging.getLogger('urllib3').setLevel(logging.WARNING)
 logging.getLogger('requests').setLevel(logging.WARNING)
+logging.getLogger('aiohttp').setLevel(logging.WARNING)
+
+
+# ============================================================================
+# DATABASE AND FILE SYSTEM FIXTURES
+# ============================================================================
+
+@pytest.fixture(scope="session")
+def test_database_dir():
+    """
+    Create temporary directory for test databases.
+    Session-scoped to reuse across all tests.
+    """
+    temp_dir = tempfile.mkdtemp(prefix="incite_test_db_")
+    yield temp_dir
+    shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@pytest.fixture
+def temp_db_path(test_database_dir):
+    """
+    Create temporary database file for individual tests.
+    Ensures each test has a clean database state.
+    """
+    db_fd, db_path = tempfile.mkstemp(suffix='.db', dir=test_database_dir)
+    os.close(db_fd)
+    yield db_path
+    if os.path.exists(db_path):
+        os.unlink(db_path)
+
+
+@pytest.fixture
+def memory_db():
+    """
+    Provide in-memory database path for tests that don't need persistence.
+    Faster for unit tests that don't require file-based database.
+    """
+    return ":memory:"
+
+
+# ============================================================================
+# AUTHENTICATION AND USER MANAGEMENT FIXTURES  
+# ============================================================================
+
+@pytest.fixture
+def auth_manager(temp_db_path):
+    """
+    Create AuthenticationManager instance with temporary database.
+    Provides clean authentication state for each test.
+    """
+    manager = AuthenticationManager(temp_db_path)
+    yield manager
+    # Cleanup if needed
+    if hasattr(manager, 'close'):
+        manager.close()
+
+
+@pytest.fixture
+def memory_auth_manager():
+    """
+    Create AuthenticationManager with in-memory database.
+    Faster for tests that don't need persistent authentication data.
+    """
+    manager = AuthenticationManager(":memory:")
+    yield manager
+    if hasattr(manager, 'close'):
+        manager.close()
+
+
+@pytest.fixture
+def sample_user_data():
+    """
+    Provide sample user registration data for tests.
+    Consistent test data across multiple test files.
+    """
+    return {
+        'username': 'testuser',
+        'email': 'testuser@example.com',
+        'password': 'TestPassword123!'
+    }
+
+
+@pytest.fixture
+def registered_user(auth_manager, sample_user_data):
+    """
+    Register a test user and return user object.
+    Provides authenticated user context for tests.
+    """
+    user = auth_manager.register_user(
+        sample_user_data['username'],
+        sample_user_data['email'],
+        sample_user_data['password']
+    )
+    return {
+        'user': user,
+        'password': sample_user_data['password'],
+        'auth_manager': auth_manager
+    }
+
+
+# ============================================================================
+# TEXT PROCESSING AND ANALYSIS FIXTURES
+# ============================================================================
+
+@pytest.fixture
+def text_processor(temp_db_path):
+    """
+    Create TextProcessor instance with temporary database.
+    Provides clean text processing state for each test.
+    """
+    processor = TextProcessor(temp_db_path)
+    yield processor
+    if hasattr(processor, 'close'):
+        processor.close()
+
+
+@pytest.fixture
+def memory_text_processor():
+    """
+    Create TextProcessor with in-memory database.
+    Faster for tests that don't need persistent text data.
+    """
+    processor = TextProcessor(":memory:")
+    yield processor
+    if hasattr(processor, 'close'):
+        processor.close()
+
+
+@pytest.fixture
+def db_manager(temp_db_path):
+    """
+    Create DatabaseManager instance with temporary database.
+    Provides database connection management for tests.
+    """
+    manager = DatabaseManager(temp_db_path)
+    yield manager
+    manager.close_all_connections()
+
+
+@pytest.fixture
+def memory_db_manager():
+    """
+    Create DatabaseManager with in-memory database.
+    Faster for database operation tests.
+    """
+    manager = DatabaseManager(":memory:")
+    yield manager
+    manager.close_all_connections()
 
 
 @pytest.fixture(scope="session")
